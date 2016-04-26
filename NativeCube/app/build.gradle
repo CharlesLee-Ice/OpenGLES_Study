@@ -1,0 +1,40 @@
+apply plugin: 'com.android.model.application'
+
+model {
+    android {
+        compileSdkVersion = 23
+        buildToolsVersion = "23.0.2"
+
+        defaultConfig.with {
+            applicationId = "com.hujiang.nativecube"
+            minSdkVersion.apiLevel = 17
+            targetSdkVersion.apiLevel = 22
+        }
+
+    }
+
+    android.ndk {
+        moduleName = "native-cube"
+        cppFlags.addAll(["-I${file("src/main/jni/native_app_glue")}".toString(),
+                        "-I${file("src/main/jni/common")}".toString()])
+        ldLibs.addAll(["android", "EGL", "GLESv2", "log", "atomic"])
+        stl = "c++_static"
+    }
+
+    // jni is the default dir; config this if yours is in different directory
+    android.sources {
+        main {
+            jni {
+                source {
+                    srcDirs 'src/main/jni'
+                }
+            }
+        }
+    }
+    android.buildTypes {
+        release {
+            minifyEnabled = false
+            proguardFiles.add(file('proguard-rules.txt'))
+        }
+    }
+}
