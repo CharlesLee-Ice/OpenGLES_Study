@@ -17,6 +17,7 @@
 #include <android/native_window_jni.h>
 
 #include "JNIHelper.h"
+#include "NDKHelper.h"
 
 class CubeRenderer {
 public:
@@ -25,6 +26,8 @@ public:
 
     void init(int32_t width, int32_t heigth);
     void render();
+    bool Bind( ndk_helper::TapCamera* camera );
+    void Update( float dTime );
 
     GLuint createProgram();
     GLuint loadShader(GLenum shaderType, const char* pSource);
@@ -37,11 +40,17 @@ public:
 
     GLuint gvPositionHandle;
     GLuint gvFactorVertex;
+    GLuint gmFactorMatrix;
 
     GLuint program;
 
     int32_t viewWidth;
     int32_t viewHeigth;
+
+    ndk_helper::TapCamera* camera_;
+
+    ndk_helper::Mat4 mat_projection_;
+    ndk_helper::Mat4 mat_view_;
 };
 
 

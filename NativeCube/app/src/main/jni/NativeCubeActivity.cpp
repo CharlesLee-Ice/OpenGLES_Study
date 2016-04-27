@@ -21,6 +21,8 @@ public:
     void drawFrame();
     void termDisplay();
 
+    void TransformPosition( ndk_helper::Vec2& vec );
+
     void initEGL();
 
     struct android_app* app;
@@ -33,6 +35,7 @@ public:
     CubeRenderer renderer;
 
     ndk_helper::DragDetector drag_detector_;
+    ndk_helper::TapCamera tap_camera_;
 };
 
 Engine g_engine;
@@ -44,6 +47,7 @@ void Engine::initDisplay()
     initEGL();
 
     renderer.init(width, height);
+    renderer.Bind( &tap_camera_ );
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
@@ -55,6 +59,8 @@ void Engine::initDisplay()
 void Engine::drawFrame()
 {
     LOGE("drawFrame~~~");
+
+    renderer.Update( 0.f );
 
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -109,6 +115,13 @@ void Engine::initEGL()
     LOGE("GL version: %s", versionStr);
 }
 
+void Engine::TransformPosition( ndk_helper::Vec2& vec )
+{
+    vec = ndk_helper::Vec2( 2.0f, 2.0f ) * vec
+            / ndk_helper::Vec2( width, height )
+            - ndk_helper::Vec2( 1.f, 1.f );
+}
+
 static void engine_handle_cmd(struct android_app* app, int32_t cmd)
 {
     switch(cmd) {
@@ -135,12 +148,12 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event)
             // Otherwise, start dragging
             ndk_helper::Vec2 v;
             eng->drag_detector_.GetPointer(v);
-            eng->TransformPosition(v);
+            //eng->TransformPosition(v);
             eng->tap_camera_.BeginDrag(v);
         } else if (dragState & ndk_helper::GESTURE_STATE_MOVE) {
             ndk_helper::Vec2 v;
             eng->drag_detector_.GetPointer(v);
-            eng->TransformPosition(v);
+            //eng->TransformPosition(v);
             eng->tap_camera_.Drag(v);
         } else if (dragState & ndk_helper::GESTURE_STATE_END) {
             eng->tap_camera_.EndDrag();
@@ -163,11 +176,12 @@ void android_main(struct android_app* state) {
         int events;
         struct android_poll_source* source;
 
-        while ((ident = ALooper_pollAll(-1, NULL, &events, (void**)&source)) >= 0) {
+        while ((ident = ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0) {
             if (source != NULL) {
                 source->process(state, source);
             }
         }
+        g_engine.drawFrame();
     }
 
 }

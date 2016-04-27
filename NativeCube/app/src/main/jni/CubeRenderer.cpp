@@ -7,6 +7,7 @@
 static const char gVertexShader[] = 
     "attribute highp vec3 myVertex;\n"
     "uniform highp vec3 facVertex;\n"
+    "uniform highp mat4 uPMatrix;\n"
     "void main() {\n"
     "  gl_Position = vec4(facVertex, 1) * vec4(myVertex,1);\n"
     "}\n";
@@ -57,9 +58,7 @@ void CubeRenderer::init(int32_t width, int32_t heigth)
 
     gvPositionHandle = glGetAttribLocation(program, "myVertex");
     gvFactorVertex = glGetUniformLocation(program, "facVertex");
-//    GLuint gvFactorVertex1 = glGetUniformLocation(program, "facVertex1");
-
-//    LOGE("factorvertex: %d facVertex1: %d gvPositionHandle： %d", gvFactorVertex, gvFactorVertex1, gvPositionHandle);
+    gmFactorMatrix = glGetUniformLocation(program, "uPMatrix");
 
     num_vertices = sizeof(g_vertexs)/sizeof(g_vertexs[0])/3;
     glGenBuffers(1, &vbo);
@@ -74,6 +73,28 @@ void CubeRenderer::init(int32_t width, int32_t heigth)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+bool CubeRenderer::Bind( ndk_helper::TapCamera* camera )
+{
+    camera_ = camera;
+    return true;
+}
+
+void CubeRenderer::Update( float fTime )
+{
+    const float CAM_X = 0.f;
+    const float CAM_Y = 0.f;
+    const float CAM_Z = 0.f;
+
+    mat_view_ = ndk_helper::Mat4::LookAt( ndk_helper::Vec3( CAM_X, CAM_Y, CAM_Z ),
+            ndk_helper::Vec3( 0.f, 0.f, 0.f ), ndk_helper::Vec3( 0.f, 1.f, 0.f ) );
+
+    if( camera_ )
+    {
+        camera_->Update();
+        mat_view_ = camera_->GetRotationMatrix();
+    }
+}
+
 void CubeRenderer::render()
 {
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -85,6 +106,8 @@ void CubeRenderer::render()
     glUseProgram(program);
 
     glUniform3f(gvFactorVertex, 1.0f, (float)viewWidth / (float)viewHeigth, 1.0f);
+    glUniformMatrix4fv( gmFactorMatrix, 1, GL_FALSE, mat_view_.Ptr() );
+    mat_view_.Dump();
 
     glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, 0);
 
